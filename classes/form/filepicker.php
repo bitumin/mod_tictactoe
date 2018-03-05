@@ -39,6 +39,7 @@ class filepicker extends moodleform {
 
     /**
      * @throws \HTML_QuickForm_Error
+     * @throws \coding_exception
      */
     protected function definition() {
         $form = $this->_form;

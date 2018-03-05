@@ -17,7 +17,7 @@
 /**
  * Class for gallery persistence.
  *
- * @package    mod_gallery
+ * @package    mod_tictactoe
  * @copyright  2017 SM - CV&A Constuling <mmoriana@cvaconsulting.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -41,7 +41,7 @@ use stdClass;
  * @copyright  2017 SM - CV&A Constuling <mmoriana@cvaconsulting.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class exmaple extends persistent {
+class example extends persistent {
     const TABLE = 'tictactoe';
 
     /**
@@ -88,7 +88,6 @@ class exmaple extends persistent {
      * @param $value
      * @return true|lang_string
      * @throws \dml_exception
-     * @throws \coding_exception
      */
     protected function validate_course($value) {
         global $DB;
@@ -102,7 +101,6 @@ class exmaple extends persistent {
     /**
      * @param $value
      * @return true|lang_string
-     * @throws \coding_exception
      */
     protected function validate_userid($value) {
         if (!core_user::is_real_user($value, true)) {
@@ -126,6 +124,7 @@ class exmaple extends persistent {
 
     /**
      * @return bool|stdClass
+     * @throws \coding_exception
      * @throws \dml_exception
      */
     public function get_author() {
@@ -134,6 +133,7 @@ class exmaple extends persistent {
 
     /**
      * @return bool|stdClass
+     * @throws \coding_exception
      * @throws \dml_exception
      */
     public function get_last_modification_author() {
@@ -142,6 +142,8 @@ class exmaple extends persistent {
 
     /**
      * @return stdClass
+     * @throws \coding_exception
+     * @throws \dml_exception
      */
     public function get_course_record() {
         return get_course($this->get('course'));
@@ -149,6 +151,8 @@ class exmaple extends persistent {
 
     /**
      * @return false|stdClass
+     * @throws \coding_exception
+     * @throws \moodle_exception
      */
     public function get_cm() {
         $instanceid = $this->get('id');
@@ -172,6 +176,8 @@ class exmaple extends persistent {
 
     /**
      * @return false|context_module
+     * @throws \coding_exception
+     * @throws \moodle_exception
      */
     public function get_context() {
         if (!$cm = $this->get_cm()) {

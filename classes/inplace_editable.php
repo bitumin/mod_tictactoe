@@ -23,15 +23,22 @@ use lang_string;
 use renderer_base;
 
 /**
- * Class mod_gallery_inplace_editable
+ * Class mod_tictactoe_inplace_editable
  */
 class inplace_editable extends core_inplace_editable {
+    /**
+     * inplace_editable constructor.
+     * @param $itemtype
+     * @param $itemid
+     * @param $value
+     * @param $editable
+     */
     public function __construct($itemtype, $itemid, $value, $editable) {
         $displayvalue = format_string($value);
-        $hint = new lang_string('inplace_hint', 'mod_gallery');
-        $editlabel = new lang_string('editlabel', 'mod_gallery') . ' ' . format_string($value);
+        $hint = new lang_string('inplace_hint', 'mod_tictactoe');
+        $editlabel = new lang_string('editlabel', 'mod_tictactoe') . ' ' . format_string($value);
 
-        parent::__construct('mod_gallery', $itemtype, $itemid, $editable, $displayvalue, $value, $hint, $editlabel);
+        parent::__construct('mod_tictactoe', $itemtype, $itemid, $editable, $displayvalue, $value, $hint, $editlabel);
     }
 
     /**
@@ -39,6 +46,7 @@ class inplace_editable extends core_inplace_editable {
      *
      * @param renderer_base $output typically, the renderer that's calling this function
      * @return string
+     * @throws \moodle_exception
      */
     public function render(renderer_base $output) {
         return $output->render_from_template('mod_tictactoe/inplace_editable', $this->export_for_template($output));
