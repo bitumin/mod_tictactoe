@@ -31,16 +31,17 @@ use plugin_renderer_base;
 /**
  * Renderer class.
  *
- * @package    mod_gallery
- * @copyright  2017 SM - CV&A Consulting <mmoriana@cvaconsulting.com>
+ * @package    mod_tictactoe
+ * @copyright  2018 Mitxel Moriana <moriana.mitxel@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class renderer extends plugin_renderer_base {
     /**
      * Defer to template.
      *
-     * @param gallery_assignment_page $page
+     * @param view_page $page
      * @return string html for the page
+     * @throws \moodle_exception
      */
     public function render_view_page($page) {
         $data = $page->export_for_template($this);

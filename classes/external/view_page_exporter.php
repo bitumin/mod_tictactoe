@@ -22,7 +22,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace mod_gallery\external;
+namespace mod_tictactoe\external;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -33,13 +33,13 @@ use renderer_base;
 /**
  * Class for exporting gallery assignment page data.
  *
- * @copyright  2017 SM - CV&A Consulting <mmoriana@cvaconsulting.com>
+ * @copyright  2018 Mitxel Moriana <moriana.mitxel@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class example_exporter extends exporter {
+class view_page_exporter extends exporter {
     protected static function define_related() {
         return array(
-            'context' => 'context',
+            'context' => 'context'
         );
     }
 
@@ -47,6 +47,9 @@ class example_exporter extends exporter {
         return array(
             'contextid' => array(
                 'type' => PARAM_INT,
+            ),
+            'level' => array(
+                'type' => PARAM_TEXT,
             ),
         );
     }
@@ -57,7 +60,8 @@ class example_exporter extends exporter {
 
         $values = array();
         $values['contextid'] = $context->id;
-        $values['hello'] = 'Hello world!';
+        // Get this from the instance setting!
+        $values['level'] = 'blind'; // novice, master
 
         return $values;
     }

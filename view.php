@@ -17,35 +17,51 @@
 /**
  * Prints a particular instance of tictactoe
  *
- * You can have a rather longer description of the file as well,
- * if you like, and it can span multiple lines.
- *
  * @package    mod_tictactoe
  * @copyright  2018 Mitxel Moriana <moriana.mitxel@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-// Replace tictactoe with the name of your module and remove this line.
+/*
+ * Little but necessary explanation concerning Moodle views:
+ *
+ * view.php is the entry point for out activity instance view.
+ *
+ * A typical "modern" Moodle view has about 8 parts:
+ * - Parameters fetching
+ * - Login, context and capabilities checks (security)
+ * - Page view event triggers (recommended so admins can keep track of possible errors, unwanted accesses...)
+ * - Page setup (self-url, title, heading, >>> layout selection <<<, front-end libraries dependencies...)
+ * - Controller or business logic (fetching all necessary data to actually print the view)
+ * - echo $OUTPUT->header(); (tells the layout the view printing has started)
+ * - Renderer instantiation and renderer methods to finally render our page content
+ * - echo $OUTPUT->footer(); (tells the layout the view printing has finished)
+ *
+ * Notice that the page layout will take care of printing the header and footer of the page, while
+ * our renderer and rendering methods will just take care of the "page-specific" main content.
+ */
 
 require_once(dirname(dirname(__DIR__)) . '/config.php');
 require_once(__DIR__ . '/lib.php');
 
-$id = optional_param('id', 0, PARAM_INT); // Course_module ID, or
-$n = optional_param('n', 0, PARAM_INT);  // ... tictactoe instance ID - it should be named as the first character of the module.
+$id = optional_param('id', 0, PARAM_INT); // Course_module ID.
+$t = optional_param('n', 0, PARAM_INT); // Tictactoe instance ID.
 
 if ($id) {
     $cm = get_coursemodule_from_id('tictactoe', $id, 0, false, MUST_EXIST);
     $course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
     $tictactoe = $DB->get_record('tictactoe', array('id' => $cm->instance), '*', MUST_EXIST);
-} else if ($n) {
-    $tictactoe = $DB->get_record('tictactoe', array('id' => $n), '*', MUST_EXIST);
+} else if ($t) {
+    $tictactoe = $DB->get_record('tictactoe', array('id' => $t), '*', MUST_EXIST);
     $course = $DB->get_record('course', array('id' => $tictactoe->course), '*', MUST_EXIST);
     $cm = get_coursemodule_from_instance('tictactoe', $tictactoe->id, $course->id, false, MUST_EXIST);
 } else {
-    error('You must specify a course_module ID or an instance ID');
+    print_error('You must specify a course_module ID or an instance ID');
 }
 
 require_login($course, true, $cm);
+
+$context = context_module::instance($cm->id);
 
 $event = \mod_tictactoe\event\course_module_viewed::create(array(
     'objectid' => $PAGE->cm->instance,
@@ -54,8 +70,6 @@ $event = \mod_tictactoe\event\course_module_viewed::create(array(
 $event->add_record_snapshot('course', $PAGE->course);
 $event->add_record_snapshot($PAGE->cm->modname, $tictactoe);
 $event->trigger();
-
-// Print the page header.
 
 $PAGE->set_url('/mod/tictactoe/view.php', array('id' => $cm->id));
 $PAGE->set_title(format_string($tictactoe->name));
@@ -66,18 +80,24 @@ $PAGE->set_heading(format_string($course->fullname));
  * $PAGE->set_cacheable(false);
  * $PAGE->set_focuscontrol('some-html-id');
  * $PAGE->add_body_class('tictactoe-'.$somevar);
+ * $PAGE->set_pagelayout('my_custom_layout');
  */
 
 // Output starts here.
 echo $OUTPUT->header();
 
-// Conditions to show the intro can change to look for own settings or whatever.
-if ($tictactoe->intro) {
+if (!empty($tictactoe->intro)) {
     echo $OUTPUT->box(format_module_intro('tictactoe', $tictactoe, $cm->id), 'generalbox mod_introbox', 'tictactoeintro');
 }
+echo $OUTPUT->heading(format_string($tictactoe->name));
 
-// Replace the following lines with you own code.
-echo $OUTPUT->heading('Yay! It works!');
+/** @var mod_tictactoe\output\renderer $renderer */
+$renderer = $PAGE->get_renderer('mod_tictactoe');
+$page = new \mod_tictactoe\output\view_page($context); // The page object takes care of fetching the data for the view.
+echo $renderer->render_view_page($page); // The renderer and its methods takes care of passing the page data to our template.
 
-// Finish the page.
+// Ideally, the template takes care of all the front-end logic (libraries, strings, styling and so on...).
+// If possible, it's better to avoid handling any front-end operations from this file.
+
+// Output finishes here.
 echo $OUTPUT->footer();

@@ -17,8 +17,8 @@
 /**
  * Class containing data for gallery assignment view page
  *
- * @package    mod_gallery
- * @copyright  2017 SM - CV&A Consulting <mmoriana@cvaconsulting.com>
+ * @package    mod_tictactoe
+ * @copyright  2018 Mitxel Moriana <moriana.mitxel@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -26,11 +26,12 @@ namespace mod_tictactoe\output;
 
 defined('MOODLE_INTERNAL') || die();
 
+global $CFG;
 require_once($CFG->dirroot . '/webservice/externallib.php');
 require_once(__DIR__ . '/../../locallib.php');
 
 use context;
-use mod_gallery\external\example_exporter;
+use mod_tictactoe\external\view_page_exporter;
 use renderable;
 use stdClass;
 use templatable;
@@ -39,7 +40,7 @@ use renderer_base;
 /**
  * Class containing data for index page
  *
- * @copyright  2017 SM - CV&A Consulting <mmoriana@cvaconsulting.com>
+ * @copyright  2018 Mitxel Moriana <moriana.mitxel@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class view_page implements renderable, templatable {
@@ -59,9 +60,10 @@ class view_page implements renderable, templatable {
      *
      * @param renderer_base $output
      * @return array|stdClass
+     * @throws \coding_exception
      */
     public function export_for_template(renderer_base $output) {
-        $exporter = new example_exporter(null, [
+        $exporter = new view_page_exporter(null, [
             'context' => $this->context,
         ]);
 

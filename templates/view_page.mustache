@@ -15,19 +15,39 @@
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
 {{!
-    @template mod_gallery/gallery_assignment_page
+    @template mod_tictactoe/view_page
 
-    Starting point for a gallery asignment page
+    Tictactoe view template
 
     * Context:
     contextid
-    hello
+    level
 }}
-<div data-region="view-page" data-contextid="{{contextid}}">
-    {{hello}}
+<div data-region="view-page" data-contextid="{{contextid}}" data-level="{{level}}">
+    <div class='main-container'>
+        <div class='board'>
+            <div class='cell' data-indx="0"></div>
+            <div class='cell' data-indx="1"></div>
+            <div class='cell' data-indx="2"></div>
+            <div class='cell' data-indx="3"></div>
+            <div class='cell' data-indx="4"></div>
+            <div class='cell' data-indx="5"></div>
+            <div class='cell' data-indx="6"></div>
+            <div class='cell' data-indx="7"></div>
+            <div class='cell' data-indx="8"></div>
+        </div>
+
+        <div class='control'>
+            <div class='ingame' id="human">It's your turn ...</div>
+            <div class='ingame' id="ai">AI's turn...</div>
+            <div class='ingame' id="won">You won !</div>
+            <div class='ingame' id="lost">You lost!</div>
+            <div class='ingame' id="draw">It's a draw!</div>
+        </div>
+    </div>
 </div>
 {{#js}}
-require(['mod_tictactoe/example'], function(example) {
-    example.init();
-});
+    require(['mod_tictactoe/control'], function(control) {
+        control.init("{{level}}");
+    });
 {{/js}}
