@@ -3,44 +3,72 @@
  */
 define([
     'jquery',
-    'mod_tictactoe/game',
-    'mod_tictactoe/ui',
-    'mod_tictactoe/ai',
-    'mod_tictactoe/state'
-], function ($, Game, ui, AI, State) {
+    'mod_tictactoe/ui'
+], function ($, ui) {
     return {
-        init: function (level) {
-            var globals = {};
-
-            globals.level = level;
-
-            if (typeof globals.level !== "undefined") {
-                var aiPlayer = new AI(globals.level);
-                globals.game = new Game(aiPlayer);
-                aiPlayer.plays(globals.game);
-                globals.game.start();
-            }
+        init: function () {
+            // Light front-end game state control.
+            var tictactoe = {};
+            tictactoe.status = 'running';
+            tictactoe.turn = 'X';
+            ui.switchViewTo("human"); // Show that we are in the human turn.
 
             /*
-             * click on cell (onclick div.cell) behavior and control
-             * if an empty cell is clicked when the game is running and its the human player's turn
-             * get the indices of the clicked cell, create the next game state, update the UI, and
-             * advance the game to the new created state
+             * Click on cell (onclick div.cell) behavior and control:
+             * If an empty cell is clicked when the game is running and its the human player's turn
+             * get the indices of the clicked cell and push it to plugin back end to handle the state update
              */
             $(".cell").each(function () {
-                var $this = $(this);
-                $this.click(function () {
+                var $cell = $(this);
+                $cell.click(function () {
                     if (
-                        globals.game.status === "running"
-                        && globals.game.currentState.turn === "X"
-                        && !$this.hasClass('occupied')
+                        tictactoe.status === "running"
+                        && tictactoe.turn === 'X'
+                        && !$cell.hasClass('occupied')
                     ) {
-                        var indx = parseInt($this.data("indx"));
-                        var next = new State(globals.game.currentState);
-                        next.board[indx] = "X";
-                        ui.insertAt(indx, "X");
-                        next.advanceTurn();
-                        globals.game.advanceTo(next);
+                        tictactoe.turn = 'O'; // Switch to AI turn.
+                        ui.switchViewTo("ai"); // Show that we are in the AI's turn.
+
+                        var indx = parseInt($cell.data("indx")); // Fetch human move.
+                        ui.insertAt(indx, 'X'); // Show fetched human move in the board.
+
+                        // TODO: Push move to plugin external service
+
+                        // TODO: Wait for back end movement validation and AI next move (new state). Example:
+                        var _state = {}; // Received state with new AI move and board state information.
+                        _state.validMove = true;
+                        _state.isTerminal = false;
+                        _state.movePosition = 1;
+
+                        if (!_state.validMove) {
+                            // TODO: undo last human move.
+
+                            tictactoe.turn = "X";
+                            ui.switchViewTo("try-again");
+
+                            return;
+                        }
+
+                        // Human move validated, update the board with the AI's move or the end of the game status.
+                        if (!_state.isTerminal) {
+                            // The game is still running.
+                            ui.insertAt(_state.movePosition, 'O'); // Show AI move in board.
+                            tictactoe.turn = "X";
+                            ui.switchViewTo("human");
+                        } else {
+                            // The game just finished.
+                            tictactoe.status = "ended";
+                            if (_state.result === "X-won") {
+                                // Human won.
+                                ui.switchViewTo("won");
+                            } else if (_state.result === "O-won") {
+                                // Human lost.
+                                ui.switchViewTo("lost");
+                            } else {
+                                // It's a draw.
+                                ui.switchViewTo("draw");
+                            }
+                        }
                     }
                 });
             });

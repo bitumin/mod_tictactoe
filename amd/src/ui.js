@@ -9,41 +9,26 @@ define([
      */
     var ui = {};
 
-    // holds the state of the initial controls visibility
-    ui.intialControlsVisible = true;
-
-    // holds the setInterval handle for the robot flickering
-    ui.robotFlickeringHandle = 0;
-
     // holds the current visible view
-    ui.currentView = "";
+    ui.currentView = '';
 
     /**
      * Switches the view on the UI depending on who's turn it switches
-     * @param turn [String]: the player to switch the view to
+     * @param {String} turn The player to switch the view to (X or O)
      */
     ui.switchViewTo = function (turn) {
-
-        //helper function for async calling
-        function _switch(_turn) {
-            ui.currentView = "#" + _turn;
-            $(ui.currentView).show();
+        if (ui.currentView !== '') {
+            // If the game is in an intermediate state hide the previous view.
+            $(ui.currentView).hide();
         }
 
-        if (ui.intialControlsVisible) {
-            // if the game is just starting
-            ui.intialControlsVisible = false;
-        } else {
-            // if the game is in an intermediate state
-            if (ui.currentView !== '') {
-                $(ui.currentView).hide();
-            }
-            _switch(turn);
-        }
+        // Show the next view.
+        ui.currentView = "#" + turn;
+        $(ui.currentView).show();
     };
 
     /**
-     * places X or O in the specified place in the board
+     * Places X or O in the specified place in the board
      * @param {Number} indx row number (0-indexed)
      * @param {String} symbol X or O
      */

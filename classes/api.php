@@ -24,5 +24,7 @@ require_once(__DIR__ . '/../locallib.php');
  * Class mod_tictactoe_api
  */
 class api {
+    public static function start_tictactoe_game() {
 
+    }
 }

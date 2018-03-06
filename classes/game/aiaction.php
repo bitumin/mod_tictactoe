@@ -20,7 +20,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace mod_tictactoe\ai;
+namespace mod_tictactoe\game;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -39,10 +39,14 @@ class AIAction {
         $this->movePosition = $pos;
     }
 
+    /**
+     * @param State $state
+     * @return State
+     */
     public function applyTo($state) {
         $next = new State($state);
 
-        //put the letter on the board
+        // Put the letter on the board.
         $next->board[$this->movePosition] = $state->turn;
 
         if ($state->turn === 'O') {
@@ -55,38 +59,38 @@ class AIAction {
     }
 
     /**
-     * public static function that defines a rule for sorting AIActions in ascending manner
+     * Defines a rule for sorting AIActions in ascending manner
      * @param $firstAction [AIAction] : the first action in a pairwise sort
      * @param $secondAction [AIAction]: the second action in a pairwise sort
      * @return int {Number} -1, 1, or 0
      */
     public static function ASCENDING($firstAction, $secondAction) {
         if ($firstAction->minimaxVal < $secondAction->minimaxVal) {
-            return -1; //indicates that firstAction goes before secondAction
+            return -1; // Indicates that firstAction goes before secondAction.
         }
 
         if ($firstAction->minimaxVal > $secondAction->minimaxVal) {
-            return 1; //indicates that secondAction goes before firstAction
+            return 1; // Indicates that secondAction goes before firstAction.
         }
 
-        return 0; //indicates a tie
+        return 0; // Indicates a tie.
     }
 
     /**
-     * public static function that defines a rule for sorting AIActions in descending manner
+     * Defines a rule for sorting AIActions in descending manner
      * @param $firstAction [AIAction] : the first action in a pairwise sort
      * @param $secondAction [AIAction]: the second action in a pairwise sort
      * @return int {Number} -1, 1, or 0
      */
     public static function DESCENDING($firstAction, $secondAction) {
         if ($firstAction->minimaxVal > $secondAction->minimaxVal) {
-            return -1; //indicates that firstAction goes before secondAction
+            return -1; // Indicates that firstAction goes before secondAction.
         }
 
         if ($firstAction->minimaxVal < $secondAction->minimaxVal) {
-            return 1; //indicates that secondAction goes before firstAction
+            return 1; // Indicates that secondAction goes before firstAction.
         }
 
-        return 0; //indicates a tie
+        return 0; // Indicates a tie.
     }
 }
