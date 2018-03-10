@@ -33,16 +33,20 @@ define([
      * @param {String} symbol X or O
      */
     ui.insertAt = function (indx, symbol) {
-        var board = $('.cell');
-        var targetCell = $(board[indx]);
+        var $targetCell = $('.cell[data-indx="' + indx + '"]');
 
-        if (!targetCell.hasClass('occupied')) {
-            targetCell.html(symbol);
-            targetCell.css({
-                color: symbol === "X" ? "green" : "red"
-            });
-            targetCell.addClass('occupied');
+        if ($targetCell.length !== 1) {
+            return false;
         }
+        if ($targetCell.hasClass('occupied')) {
+            return false;
+        }
+
+        $targetCell.html(symbol);
+        $targetCell.css({color: symbol === "X" ? "green" : "red"});
+        $targetCell.addClass('occupied');
+
+        return true;
     };
 
     return ui;
