@@ -29,30 +29,27 @@ defined('MOODLE_INTERNAL') || die();
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class ai {
-    private $levelOfIntelligence;
+    private $level;
     private $game;
-    private $Game;
-    private $ui;
-    private $AIAction;
 
     /**
      * ai constructor.
-     * @param string $levelOfIntelligence
+     * @param string $level
      * @param game $Game
-     * @param ui $ui
-     * @param AIAction $IAction
+     * @param action $AIAction
      */
-    public function __construct($levelOfIntelligence, $Game, $ui, $AIAction) {
-        $this->levelOfIntelligence = $levelOfIntelligence;
-        $this->Game = $Game;
+    public function __construct($level, $Game, $AIAction) {
+        $this->level = $level;
         $this->game = new \stdClass();
-        $this->ui = $ui;
-        $this->AIAction = $AIAction;
     }
 
-    private function minimaxValue($state) {
-        if ($state->isTerminal()) {
-            return $this->Game->score($state);
+    /**
+     * @param state $state
+     * @return int|null
+     */
+    private function minimax_value($state) {
+        if ($state->is_terminal()) {
+            return game::score($state);
         }
 
         $stateScore = null;
@@ -62,17 +59,17 @@ class ai {
             $stateScore = 1000;
         }
 
-        $availablePositions = $state->emptyCells();
+        $availablePositions = $state->get_empty_cells();
 
         // Enumerate next available states using the info form available positions
         $availableNextStates = array_map(function ($pos) use ($state) {
-            $action = new AIAction($pos);
-            return $action->applyTo($state);
+            $action = new action($pos);
+            return $action->apply_to($state);
         }, $availablePositions);
 
         // Calculate the minimax value for all available next states and evaluate the current state's value.
         foreach ($availableNextStates as $nextState) {
-            $nextScore = $this->minimaxValue($nextState);
+            $nextScore = $this->minimax_value($nextState);
             if ($state->turn === 'X') {
                 // X wants to maximize --> update stateScore iff nextScore is larger
                 if ($nextScore > $stateScore) {
@@ -90,32 +87,33 @@ class ai {
     }
 
     /**
-     * private function: make the ai player take a blind move
+     * Function: make the ai player take a blind move
      * that is: choose the cell to place its symbol randomly
-     * @param turn [String]: the player to play, either X or O
+     * @return state
      */
-    private function takeABlindMove($turn) {
+    private function take_a_blind_move() {
         $available = $this->game->currentState->emptyCells();
         $randomCell = $available[(int) floor(mt_rand() * count($available))];
-        $action = new AIAction($randomCell);
-        $next = $action->applyTo($this->game->currentState);
-        $this->ui->insertAt($randomCell, $turn);
-        $this->game->advanceTo($next);
+        $action = new action($randomCell);
+
+        return $action->apply_to($this->game->currentState);
     }
 
     /**
-     * private function: make the ai player take a novice move,
+     * Make the ai player take a novice move,
      * that is: mix between choosing the optimal and suboptimal minimax decisions
-     * @param $turn [String]: the player to play, either X or O
+     * @param string $turn the player to play, either X or O
+     * @return state
      */
-    private function takeANoviceMove($turn) {
+    private function take_a_novice_move($turn) {
         $available = $this->game->currentState->emptyCells();
 
         // Enumerate and calculate the score for each available actions to the ai player.
+        /** @var action[] $availableActions */
         $availableActions = array_map(function ($pos) {
-            $action = new AIAction($pos); //create the action object
-            $nextState = $action->applyTo($this->game->currentState); // Get next state by applying the action.
-            $action->minimaxVal = $this->minimaxValue($nextState); // Calculate and set the action's minimax value.
+            $action = new action($pos); //create the action object
+            $nextState = $action->apply_to($this->game->currentState); // Get next state by applying the action.
+            $action->minimaxVal = $this->minimax_value($nextState); // Calculate and set the action's minimax value.
 
             return $action;
         }, $available);
@@ -123,10 +121,10 @@ class ai {
         // Sort the enumerated actions list by score.
         if ($turn === 'X') {
             // X maximizes --> sort the actions in a descending manner to have the action with maximum minimax at first.
-            $availableActions->sort($this->AIAction->DESCENDING);
+            usort($availableActions, action::descending());
         } else {
             // O minimizes --> sort the actions in an ascending manner to have the action with minimum minimax at first.
-            $availableActions->sort($this->AIAction->ASCENDING);
+            usort($availableActions, action::ascending());
         }
 
         // Take the optimal action 40% of the time, and take the 1st suboptimal action 60% of the time
@@ -134,7 +132,7 @@ class ai {
         if (mt_rand() * 100 <= 40) {
             $chosenAction = $availableActions[0];
         } else {
-            if ($availableActions->length >= 2) {
+            if (count($availableActions) >= 2) {
                 //if there is two or more available actions, choose the 1st suboptimal
                 $chosenAction = $availableActions[1];
             } else {
@@ -142,48 +140,46 @@ class ai {
                 $chosenAction = $availableActions[0];
             }
         }
-        $next = $chosenAction->applyTo($this->game->currentState);
-        $this->ui->insertAt($chosenAction->movePosition, $turn);
-        $this->game->advanceTo($next);
+
+        return $chosenAction->apply_to($this->game->currentState);
     }
 
     /**
-     * private function: make the ai player take a master move,
+     * Make the ai player take a master move,
      * that is: choose the optimal minimax decision
      * @param string $turn the player to play, either X or O
+     * @return state
      */
-    private function takeAMasterMove($turn) {
+    private function take_a_master_move($turn) {
         $available = $this->game->currentState->emptyCells();
 
         // Enumerate and calculate the score for each avaialable actions to the ai player
+        /** @var action[] $availableActions */
         $availableActions = array_map(function ($pos) {
-            $action = new AIAction($pos); //create the action object
-            $next = $action->applyTo($this->game->currentState); //get next state by applying the action
-            $action->minimaxVal = $this->minimaxValue($next); //calculate and set the action's minmax value
+            $action = new action($pos); //create the action object
+            $next = $action->apply_to($this->game->currentState); //get next state by applying the action
+            $action->minimaxVal = $this->minimax_value($next); //calculate and set the action's minmax value
             return $action;
         }, $available);
 
         // Sort the enumerated actions list by score
         if ($turn === 'X') {
             // X maximizes --> sort the actions in a descending manner to have the action with maximum minimax at first.
-            $availableActions->sort($this->AIAction->DESCENDING);
+            usort($availableActions, action::descending());
         } else {
             // O minimizes --> sort the actions in an ascending manner to have the action with minimum minimax at first.
-            $availableActions->sort($this->AIAction->ASCENDING);
+            usort($availableActions, action::ascending());
         }
 
         // Take the first action as it's the optimal.
         $chosenAction = $availableActions[0];
-        $next = $chosenAction->applyTo($this->game->currentState);
 
-        $this->ui->insertAt($chosenAction->movePosition, $turn);
-
-        $this->game->advanceTo($next);
+        return $chosenAction->apply_to($this->game->currentState);
     }
 
     /**
      * Specify the game the ai player will play
-     * @param $_game [Game] the game the ai will play
+     * @param game $_game the game the ai will play
      */
     public function plays($_game) {
         $this->game = $_game;
@@ -191,19 +187,19 @@ class ai {
 
     /**
      * Notify the ai player that it's its turn
-     * @param $turn [String]: the player to play, either X or O
+     * @param string $turn the player to play, either X or O
      */
     public function notify($turn) {
-        switch ($this->levelOfIntelligence) {
+        switch ($this->level) {
             //invoke the desired behavior based on the level chosen
             case 'blind':
-                $this->takeABlindMove($turn);
+                $this->take_a_blind_move();
                 break;
             case 'novice':
-                $this->takeANoviceMove($turn);
+                $this->take_a_novice_move($turn);
                 break;
             case 'master':
-                $this->takeAMasterMove($turn);
+                $this->take_a_master_move($turn);
                 break;
         }
     }

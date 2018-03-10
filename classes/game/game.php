@@ -28,75 +28,31 @@ defined('MOODLE_INTERNAL') || die();
  * @copyright  2018 Mitxel Moriana <moriana.mitxel@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class Game {
+class game {
     public $autoPlayer;
     public $currentState;
-    public $status; // Initialize game status to beginning.
+    public $status;
 
     /**
      * Game constructor.
-     * @param ui $ui
-     * @param State $State
+     * @param $autoPlayer
+     * @param state $currentState
+     * @param string[] $board
+     * @param string $turn
+     * @param string $status
      */
-    public function __construct($autoPlayer, $ui, $State, $ai) {
+    public function __construct($autoPlayer, $currentState = null, $board = null, $turn = 'X', $status = 'beginning') {
         $this->autoPlayer = $autoPlayer;
-        $this->ui = $ui;
-        $this->ai = $ai;
-        $this->State = $State;
-        $this->currentState = new State();
+        $this->currentState = (null === $currentState) ? new state() : $currentState;
         // "E" stands for empty board cell.
-        $this->currentState->board = [
-            'E', 'E', 'E',
-            'E', 'E', 'E',
-            'E', 'E', 'E'
-        ];
-        // X plays first.
-        $this->currentState->turn = 'X';
-        $this->status = 'beginning';
-    }
-
-    /**
-     * public function that advances the game to a new state
-     * @param State $_state The new state to advance the game to
-     */
-    public function advanceTo($_state) {
-        $this->currentState = $_state;
-        if ($_state->isTerminal()) {
-            $this->status = 'ended';
-
-            if ($_state->result === 'X-won') {
-                // X won.
-                $this->ui->switchViewTo('won');
-            } else if ($_state->result === 'O-won') {
-                // X lost.
-                $this->ui->switchViewTo('lost');
-            } else {
-                // It's a draw.
-                $this->ui->switchViewTo('draw');
-            }
-        } else {
-            // The game is still running.
-            if ($this->currentState->turn === 'X') {
-                $this->ui->switchViewTo('human');
-            } else {
-                $this->ui->switchViewTo('ai');
-                // Notify the AI player its turn has come up.
-                $this->ai->notify('O');
-            }
-        }
-    }
-
-    public function start() {
-        if ($this->status === 'beginning') {
-            // Invoke advanceTo with the initial state.
-            $this->advanceTo($this->currentState);
-            $this->status = 'running';
-        }
+        $this->currentState->board = (null === $board) ? ['E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E'] : $board;
+        $this->currentState->turn = $turn;
+        $this->status = $status;
     }
 
     /**
      * Calculates the score of the x player in a given terminal state
-     * @param $_state [State]: the state in which the score is calculated
+     * @param state $_state The state in which the score is calculated
      * @return int the score calculated for the human player
      */
     public static function score($_state) {

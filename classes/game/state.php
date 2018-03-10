@@ -28,7 +28,7 @@ defined('MOODLE_INTERNAL') || die();
  * @copyright  2018 Mitxel Moriana <moriana.mitxel@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class State {
+class state {
     public $turn = '';
     public $oMovesCount = 0;
     public $result = 'still running';
@@ -36,7 +36,7 @@ class State {
 
     /**
      * State constructor.
-     * @param State|null $old
+     * @param state|null $old
      */
     public function __construct($old = null) {
         if ($old !== null) {
@@ -51,11 +51,11 @@ class State {
         }
     }
 
-    public function advanceTurn() {
+    public function advance_turn() {
         $this->turn = $this->turn === 'X' ? 'O' : 'X';
     }
 
-    public function emptyCells() {
+    public function get_empty_cells() {
         $indxs = [];
         for ($itr = 0; $itr < 9; $itr++) {
             if ($this->board[$itr] === 'E') {
@@ -66,7 +66,7 @@ class State {
         return $indxs;
     }
 
-    public function isTerminal() {
+    public function is_terminal() {
         $B = $this->board;
 
         // Check rows.
@@ -93,7 +93,7 @@ class State {
             }
         }
 
-        $available = $this->emptyCells();
+        $available = $this->get_empty_cells();
         if (count($available) === 0) {
             // The game is draw.
             $this->result = 'draw'; // Update the state result.
