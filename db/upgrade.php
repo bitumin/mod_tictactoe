@@ -67,5 +67,28 @@ function xmldb_tictactoe_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2018030502, 'tictactoe');
     }
 
+    if ($oldversion < 2018031300) {
+
+        $table = new xmldb_table('tictactoe_game');
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('tictactoeid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null, 'id');
+        $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null, 'tictactoeid');
+        $table->add_field('state', XMLDB_TYPE_TEXT, null, null, null, null, null, 'userid');
+        $table->add_field('result', XMLDB_TYPE_CHAR, '50', null, null, null, null, 'state');
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null, 'result');
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null, 'timecreated');
+        $table->add_field('timefinished', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'timemodified');
+
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
+        $table->add_key('tictactoeid', XMLDB_KEY_FOREIGN, array('tictactoeid'), 'tictactoe', array('id'));
+        $table->add_key('userid', XMLDB_KEY_FOREIGN, array('userid'), 'user', array('id'));
+
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        upgrade_mod_savepoint(true, 2018031300, 'tictactoe');
+    }
+
     return true;
 }

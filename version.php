@@ -28,7 +28,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'mod_tictactoe';
-$plugin->version = 2018030502;
+$plugin->version = 2018031300;
 $plugin->release = 'v0.1';
 $plugin->requires = 2017111301; // Requires Moodle 3.4
 $plugin->maturity = MATURITY_ALPHA;
