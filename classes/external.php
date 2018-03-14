@@ -26,13 +26,19 @@ namespace mod_tictactoe;
 
 defined('MOODLE_INTERNAL') || die();
 
+use coding_exception;
+use core_renderer;
+use dml_exception;
 use external_api as core_external_api;
 use external_function_parameters;
 use external_single_structure;
 use external_value;
 use invalid_parameter_exception;
-use mod_tictactoe\external\gallery_submission_exporter;
-use mod_tictactoe\persistent\gallery_assignment;
+use mod_tictactoe\external\submit_player_move_exporter;
+use mod_tictactoe\persistent\tictactoe_game;
+use moodle_exception;
+use restricted_context_exception;
+use stdClass;
 
 global $CFG;
 require_once($CFG->libdir . '/externallib.php');
@@ -46,90 +52,72 @@ require_once(__DIR__ . '/../locallib.php');
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class external extends core_external_api {
-//    public static function update_expected_completion_parameters() {
-//        return new external_function_parameters(array(
-//            'assignment' => new external_single_structure(array(
-//                'id' => new external_value(PARAM_INT),
-//                'completionexpecteddate' => new external_value(PARAM_ALPHANUMEXT,
-//                    'Completion expected date with format YYYY-MM-DD or "0" if we want to clear the current date.'),
-//            )),
-//        ));
-//    }
-//
-//    public static function update_expected_completion($assignment) {
-//        $params = self::validate_parameters(self::update_expected_completion_parameters(), array('assignment' => $assignment));
-//        $assignmentid = (int) $params['assignment']['id'];
-//        $completionexpectedstring = trim($params['assignment']['completionexpecteddate']);
-//        $timecompletionexpected = $completionexpectedstring === '0' ? 0 : strtotime($completionexpectedstring);
-//
-//        // Extra param validation.
-//        if ($assignmentid < 1) {
-//            throw new invalid_parameter_exception('Unexpected assignment id value: ' . $assignmentid);
-//        }
-//        if ($timecompletionexpected === false) {
-//            throw new invalid_parameter_exception('Unexpected "expected completion" date value: ' . $completionexpectedstring);
-//        }
-//
-//        // Context validation.
-//        $assignment = new gallery_assignment($assignmentid);
-//        $gallery = $assignment->get_gallery();
-//        $context = $gallery->get_context();
-//        self::validate_context($context);
-//
-//        // Update assignment expected completion timestamp.
-//        $assignment->set('timecompletionexpected', $timecompletionexpected);
-//        $updated = $assignment->update();
-//
-//        return array(
-//            'updated' => $updated
-//        );
-//    }
-//
-//    public static function update_expected_completion_returns() {
-//        return new external_single_structure(array(
-//            'updated' => new external_value(PARAM_BOOL, 'Assignment expected completion timestamp was successfully updated.'),
-//        ));
-//    }
-//
-//    public static function submit_assignment_parameters() {
-//        return new external_function_parameters(array(
-//            'assignment' => new external_single_structure(array(
-//                'id' => new external_value(PARAM_INT),
-//            )),
-//        ));
-//    }
-//
-//    public static function submit_assignment($assignment) {
-//        global $PAGE;
-//
-//        // Params validation.
-//        $params = self::validate_parameters(self::submit_assignment_parameters(), array('assignment' => $assignment));
-//        $assignmentid = (int) $params['assignment']['id'];
-//
-//        // Extra param validation.
-//        if ($assignmentid < 1) {
-//            throw new invalid_parameter_exception('Unexpected assignment id value: ' . $assignmentid);
-//        }
-//
-//        // Context validation.
-//        $assignment = new gallery_assignment($assignmentid);
-//        $gallery = $assignment->get_gallery();
-//        $context = $gallery->get_context();
-//        self::validate_context($context);
-//
-//        // Submit assignment.
-//        $course = $gallery->get_course_record();
-//        $cm = $gallery->get_cm();
-//        $submissiontimestamp = api::submit_assignment($context, $course, $cm, $assignment);
-//
-//        // Prepare response.
-//        $output = $PAGE->get_renderer('core');
-//        $exporter = new gallery_submission_exporter(null, ['context' => $context, 'submissiontimestamp' => $submissiontimestamp]);
-//
-//        return $exporter->export($output);
-//    }
-//
-//    public static function submit_assignment_returns() {
-//        return gallery_submission_exporter::get_read_structure();
-//    }
+    /**
+     * @return external_function_parameters
+     */
+    public static function submit_player_move_parameters() {
+        return new external_function_parameters(array(
+            'tictactoe' => new external_single_structure(array(
+                'gameid' => new external_value(PARAM_INT),
+                'playermove' => new external_value(PARAM_ALPHANUMEXT)
+            ))
+        ));
+    }
+
+    /**
+     * @param $tictactoe
+     * @return stdClass
+     * @throws dml_exception
+     * @throws moodle_exception
+     * @throws coding_exception
+     * @throws invalid_parameter_exception
+     * @throws restricted_context_exception
+     */
+    public static function submit_player_move($tictactoe) {
+        global $USER, $PAGE;
+
+        $params = self::validate_parameters(self::submit_player_move_parameters(), array('tictactoe' => $tictactoe));
+        $gameid = (int) $params['tictactoe']['gameid'];
+        $playermove = (int) $params['tictactoe']['playermove'];
+
+        // Extra param validation.
+        if ($gameid < 1) {
+            throw new invalid_parameter_exception('Unexpected tictactoe game id value: ' . $gameid);
+        }
+        if ($playermove < 0) {
+            throw new invalid_parameter_exception('Unexpected player move index value: ' . $playermove);
+        }
+
+        // Context validation.
+        $tictactoegame = new tictactoe_game($gameid);
+        $tictactoe = $tictactoegame->get_tictactoe();
+        $context = $tictactoe->get_context();
+        self::validate_context($context);
+
+        // Check user capabilities
+        require_capability('mod/tictactoe:submit', $context);
+
+        // Check user is the current game player
+        $player = $tictactoegame->get_player();
+        if ((int) $player->id !== (int) $USER->id) {
+            throw new moodle_exception('accessdenied', 'admin');
+        }
+
+        // Submit move and return new tictactoe game state.
+        $newstate = $tictactoegame->process_player_move($playermove);
+
+        /** @var core_renderer $output */
+        $output = $PAGE->get_renderer('core');
+        /** @var submit_player_move_exporter $exporter */
+        $exporter = new submit_player_move_exporter(null, ['context' => $context, 'state' => $newstate]);
+
+        return $exporter->export($output);
+    }
+
+    /**
+     * @return external_single_structure
+     */
+    public static function submit_player_move_returns() {
+        return submit_player_move_exporter::get_read_structure();
+    }
 }

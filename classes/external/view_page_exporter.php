@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Example exporter class
+ * Tictactoe main view page exporter class
  *
  * @package    mod_tictactoe
  * @copyright  2018 Mitxel Moriana <moriana.mitxel@gmail.com>
@@ -31,7 +31,7 @@ use core\external\exporter;
 use renderer_base;
 
 /**
- * Class for exporting gallery assignment page data.
+ * Class for tictactoe view page data.
  *
  * @copyright  2018 Mitxel Moriana <moriana.mitxel@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
