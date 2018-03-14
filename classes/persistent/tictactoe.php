@@ -15,10 +15,10 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Class for gallery persistence.
+ * Class for tictactoe activity instance persistence.
  *
  * @package    mod_tictactoe
- * @copyright  2017 SM - CV&A Constuling <mmoriana@cvaconsulting.com>
+ * @copyright  2018 Mitxel Moriana <moriana.mitxel@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -31,17 +31,16 @@ require_once(__DIR__ . '/../../locallib.php');
 use cm_info;
 use context_module;
 use core\persistent;
-use core_user;
 use lang_string;
 use stdClass;
 
 /**
- * Class for loading/storing galleries from the DB.
+ * Class for loading/storing tictactoe instances from the DB.
  *
- * @copyright  2017 SM - CV&A Constuling <mmoriana@cvaconsulting.com>
+ * @copyright  2018 Mitxel Moriana <moriana.mitxel@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class example extends persistent {
+class tictactoe extends persistent {
     const TABLE = 'tictactoe';
 
     /**
@@ -50,11 +49,12 @@ class example extends persistent {
      * @return array
      */
     protected static function define_properties() {
+        /*
+         * Do not declare id, timecreated or timemodified fields.
+         * This fields are automatically handle by Moodle.
+         */
         return array(
             'course' => array(
-                'type' => PARAM_INT,
-            ),
-            'userid' => array(
                 'type' => PARAM_INT,
             ),
             'name' => array(
@@ -64,7 +64,7 @@ class example extends persistent {
                 'type' => PARAM_RAW,
                 'optional' => true,
                 'null' => NULL_ALLOWED,
-                'description' => 'Gallery module instance introduction text',
+                'description' => 'Tictactoe module instance introduction text',
                 'default' => null,
             ),
             'introformat' => array(
@@ -92,53 +92,16 @@ class example extends persistent {
     protected function validate_course($value) {
         global $DB;
         if (!$DB->record_exists('course', ['id' => $value])) {
+            /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
             return new lang_string('invalidcourseid', 'error');
         }
 
         return true;
     }
 
-    /**
-     * @param $value
-     * @return true|lang_string
-     */
-    protected function validate_userid($value) {
-        if (!core_user::is_real_user($value, true)) {
-            return new lang_string('invaliduserid', 'error');
-        }
-
-        return true;
-    }
-
-    /*
-     * Custom property getters
-     */
-
-    public function get_formatted_name() {
-        return format_string($this->get('name'));
-    }
-
     /*
      * Relationships helpers
      */
-
-    /**
-     * @return bool|stdClass
-     * @throws \coding_exception
-     * @throws \dml_exception
-     */
-    public function get_author() {
-        return core_user::get_user($this->get('userid'));
-    }
-
-    /**
-     * @return bool|stdClass
-     * @throws \coding_exception
-     * @throws \dml_exception
-     */
-    public function get_last_modification_author() {
-        return core_user::get_user($this->get('usermodified'));
-    }
 
     /**
      * @return stdClass
@@ -185,18 +148,5 @@ class example extends persistent {
         }
 
         return context_module::instance($cm->id);
-    }
-
-    /*
-     * Permission checkers
-     */
-
-    public function can_edit($context, $userid = null) {
-        global $USER;
-        if (null === $userid) {
-            $userid = $USER->id;
-        }
-
-        return has_capability('mod/gallery:edit', $context, $userid);
     }
 }
