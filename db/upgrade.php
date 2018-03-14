@@ -55,7 +55,6 @@ function xmldb_tictactoe_upgrade($oldversion) {
         $table->add_field('introformat', XMLDB_TYPE_INTEGER, '4', null, XMLDB_NOTNULL, null, '0', 'intro');
         $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'introformat');
         $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'timecreated');
-        $table->add_field('grade', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'timemodified');
 
         $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
         $table->add_index('courseindex', XMLDB_INDEX_NOTUNIQUE, array('course'));
