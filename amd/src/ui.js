@@ -46,5 +46,15 @@ define([
         return true;
     };
 
+    ui.loadBoard = function (cellValues) {
+        for (var indx = 0; indx < cellValues.length; ++indx) {
+            if (cellValues[indx] === 'E') {
+                continue;
+            }
+
+            ui.insertAt(indx, cellValues[indx]);
+        }
+    };
+
     return ui;
 });

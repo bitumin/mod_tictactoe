@@ -22,19 +22,20 @@
     * Context:
     contextid
     gameid
+    state
+        board
+            index
+            value
+        turn
+        result
+        finished
 }}
 <div data-region="view-page" data-contextid="{{contextid}}" data-gameid="{{gameid}}">
     <div class='main-container'>
         <div class='board'>
-            <div class='cell' data-indx="0"></div>
-            <div class='cell' data-indx="1"></div>
-            <div class='cell' data-indx="2"></div>
-            <div class='cell' data-indx="3"></div>
-            <div class='cell' data-indx="4"></div>
-            <div class='cell' data-indx="5"></div>
-            <div class='cell' data-indx="6"></div>
-            <div class='cell' data-indx="7"></div>
-            <div class='cell' data-indx="8"></div>
+            {{#state.board}}
+            <div class='cell' data-indx="{{indx}}">{{value}}</div>
+            {{/state.board}}
         </div>
         <div class='control'>
             <div class='ingame' id="human">It's your turn ...</div>
@@ -47,6 +48,10 @@
 </div>
 {{#js}}
     require(['mod_tictactoe/control'], function(control) {
-        control.init();
+        control.init({
+            turn: "{{state.turn}}",
+            result: "{{state.result}}",
+            finished: {{state.finished}}
+        });
     });
 {{/js}}

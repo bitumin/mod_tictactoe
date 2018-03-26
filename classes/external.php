@@ -35,6 +35,7 @@ use external_single_structure;
 use external_value;
 use invalid_parameter_exception;
 use mod_tictactoe\external\game_state_exporter;
+use mod_tictactoe\external\submit_player_move_exporter;
 use mod_tictactoe\persistent\tictactoe_game;
 use moodle_exception;
 use restricted_context_exception;
@@ -109,7 +110,7 @@ class external extends core_external_api {
         /** @var core_renderer $output */
         $output = $PAGE->get_renderer('core');
         /** @var game_state_exporter $exporter */
-        $exporter = new game_state_exporter($newstate, ['context' => $context, 'aiaction' => $aiaction]);
+        $exporter = new submit_player_move_exporter(null, ['context' => $context, 'aiaction' => $aiaction, 'state' => $newstate]);
 
         return $exporter->export($output);
     }

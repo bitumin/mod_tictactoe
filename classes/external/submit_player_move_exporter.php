@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Tictactoe main view page exporter class
+ * Game state exporter class
  *
  * @package    mod_tictactoe
  * @copyright  2018 Mitxel Moriana <moriana.mitxel@gmail.com>
@@ -26,57 +26,62 @@ namespace mod_tictactoe\external;
 
 defined('MOODLE_INTERNAL') || die();
 
-use context_module;
 use core\external\exporter;
+use mod_tictactoe\game\action;
 use mod_tictactoe\game\state;
-use mod_tictactoe\persistent\tictactoe;
-use mod_tictactoe\persistent\tictactoe_game;
 use renderer_base;
 
 /**
- * Class for tictactoe view page data.
+ * Class for exporting game state data after a player move.
  *
  * @copyright  2018 Mitxel Moriana <moriana.mitxel@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class view_page_exporter extends exporter {
+class submit_player_move_exporter extends exporter {
     protected static function define_related() {
         return array(
             'context' => 'context',
-            'tictactoe' => tictactoe::class,
-            'tictactoegame' => tictactoe_game::class,
+            'state' => 'false|\mod_tictactoe\game\state',
         );
     }
 
     protected static function define_other_properties() {
         return array(
-            'contextid' => array(
-                'type' => PARAM_INT,
+            'validmove' => array(
+                'type' => PARAM_BOOL,
+                'description' => 'Human move was a valid move?',
             ),
-            'gameid' => array(
+            'aimove' => array(
                 'type' => PARAM_INT,
+                'description' => 'If game has not finished yet, this is the next AI\'s move.',
+                'optional' => true,
             ),
             'state' => array(
                 'type' => game_state_exporter::read_properties_definition(),
+                'optional' => true,
             ),
         );
     }
 
     protected function get_other_values(renderer_base $output) {
-        /** @var context_module $context */
+        // We can get the first passed param (data) to the exporter using $this->data
+        // $data = $this->data;
+
+        // We can get the context params (related) passed to the exported using $this->related['therelated'];
         $context = $this->related['context'];
-        /** @var tictactoe $tictactoe */
-        $tictactoe = $this->related['tictactoe'];
-        /** @var tictactoe_game $tictactoegame */
-        $tictactoegame = $this->related['tictactoegame'];
+        /** @var state $newstate */
+        $newstate = $this->related['state'];
+        /** @var action $aiaction */
+        $aiaction = $this->related['aiaction'];
 
         $values = array();
-        $values['contextid'] = $context->id;
-        $values['gameid'] = $tictactoegame->get('id');
-
-        /** @var state $gamestate */
-        $gamestate = $tictactoegame->get('state');
-        $exporter = new game_state_exporter(null, ['context' => $context, 'state' => $gamestate]);
+        if ($newstate === false) {
+            $values['validmove'] = false;
+        } else {
+            $values['validmove'] = true;
+            $values['aimove'] = $aiaction->moveposition;
+        }
+        $exporter = new game_state_exporter(null, ['context' => $context, 'state' => $newstate]);
         $values['state'] = $exporter->export($output);
 
         return $values;

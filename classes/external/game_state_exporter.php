@@ -41,52 +41,48 @@ class game_state_exporter extends exporter {
     protected static function define_related() {
         return array(
             'context' => 'context',
-            'state' => 'state|false',
+            'state' => state::class,
         );
     }
 
     protected static function define_other_properties() {
         return array(
-            'validmove' => array(
-                'type' => PARAM_BOOL,
-                'description' => 'Human move was a valid move?',
+            'turn' => array(
+                'type' => 'string',
             ),
-            'gamefinished' => array(
-                'type' => PARAM_BOOL,
-                'description' => 'Has the game finished?',
+            'aimovescount' => array(
+                'type' => 'int',
             ),
-            'aimove' => array(
-                'type' => PARAM_INT,
-                'description' => 'If game has not finished yet, this is the next AI\'s move.',
+            'board' => array(
+                'type' => 'array',
             ),
             'result' => array(
-                'type' => PARAM_TEXT,
-                'description' => 'If game has finished this is the result of the game.',
+                'type' => 'string',
+            ),
+            'finished' => array(
+                'type' => PARAM_BOOL,
+                'description' => 'Has the game finished?',
             ),
         );
     }
 
     protected function get_other_values(renderer_base $output) {
-        // We can get the first passed param (data) to the exporter using $this->data
-        /** @var state $newstate */
-        $newstate = $this->data;
         // We can get the context params (related) passed to the exported using $this->related['therelated'];
-        /** @var action $aiaction */
-        $aiaction = $this->related['aiaction'];
+        $context = $this->related['context'];
+        /** @var state $state */
+        $state = $this->related['state'];
 
-        $gamehasfinished = $newstate->has_finished();
-
-        $values = array();
-        if ($newstate === false) {
-            $values['validmove'] = false;
-        } else {
-            $values['validmove'] = true;
-            $values['gamefinished'] = $gamehasfinished;
-            $values['aimove'] = $aiaction->moveposition;
-            if ($gamehasfinished) {
-                $values['result'] = $newstate->result;
-            }
+        $values['finished'] = $state->has_finished();
+        $values['turn'] = $state->turn;
+        $values['aimovescount'] = $state->aimovescount;
+        $values['board'] = array();
+        foreach($state->board as $indx => $cell) {
+            $values['board'][] = [
+                'indx' => $indx,
+                'value' => ($cell !== 'E') ? $cell : '',
+            ];
         }
+        $values['result'] = !empty($state->result) ? $state->result : '';
 
         return $values;
     }

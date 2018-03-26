@@ -5,13 +5,32 @@ define([
     'jquery',
     'core/ajax',
     'core/notification',
-    'mod_tictactoe/ui',
-    'mod_tictactoe/game'
-], function ($, ajax, notification, ui, game) {
+    'mod_tictactoe/ui'
+], function ($, ajax, notification, ui) {
     return {
-        init: function () {
-            // Human starts
+        init: function (state) {
+            var game = {};
+            game.id = $('div[data-region="view-page"]').data('gameid');
+            game.status = 'running';
+            game.turn = state.turn;
             ui.switchViewTo("human");
+
+            function setFinishedState(result) {
+                // The game just finished, set game status to finished and notify result.
+                game.status = "ended";
+                if (result === "X-won") { // Human won.
+                    ui.switchViewTo("won");
+                } else if (result === "O-won") { // Human lost.
+                    ui.switchViewTo("lost");
+                } else if (result === "draw") { // It's a draw.
+                    ui.switchViewTo("draw");
+                }
+            }
+
+            if (state.finished) {
+                setFinishedState(state.result);
+                return;
+            }
 
             // Click on the game cells triggers the communication with the back-end.
             $(".cell").each(function () {
@@ -39,37 +58,28 @@ define([
                             }
                         },
                         fail: notification.exception
-                    }])[0].done(function(response) {
+                    }])[0].done(function (response) {
                         // Response example:
                         var _state = {};
-                        _state.validMove = true;
-                        _state.isTerminal = false;
-                        _state.movePosition = 1;
+                        _state.validmove = true;
+                        _state.finished = false;
+                        _state.moveposition = 1;
 
-                        if (!_state.validMove) {
+
+                        if (!_state.validmove) {
                             // Undo last human move and notify invalid move.
                             game.turn = "X";
                             ui.switchViewTo("try-again");
                             return;
                         }
 
-                        if (_state.isTerminal) {
-                            // The game just finished, set game status to finished and notify result.
-                            game.status = "ended";
-                            if (_state.result === "X-won") { // Human won.
-                                ui.switchViewTo("won");
-                            } else if (_state.result === "O-won") { // Human lost.
-                                ui.switchViewTo("lost");
-                            } else if (_state.result === "draw") { // It's a draw.
-                                ui.switchViewTo("draw");
-                            } else {
-                                // Some sort of back end error happened. Notify?
-                            }
+                        if (_state.finished) {
+                            setFinishedState(_state.result);
                             return;
                         }
 
                         // The game is still running: display AI's action and notify human's turn.
-                        ui.insertAt(_state.movePosition, 'O'); // Show AI move in board.
+                        ui.insertAt(_state.moveposition, 'O'); // Show AI move in board.
                         game.turn = "X";
                         ui.switchViewTo("human");
                     });

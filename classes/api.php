@@ -47,7 +47,7 @@ class api {
         $tictactoegame = new tictactoe_game(0, (object) [
             'tictactoeid' => $tictactoe->get('id'),
             'userid' => $USER->id,
-            'state' => new state()
+            'state' => serialize(get_object_vars(new state())),
         ]);
         $tictactoegame->create();
 

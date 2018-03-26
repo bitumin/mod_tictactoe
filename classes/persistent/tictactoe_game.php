@@ -57,10 +57,7 @@ class tictactoe_game extends persistent {
                 'type' => PARAM_INT,
             ),
             'state' => array(
-                'type' => PARAM_TEXT,
-            ),
-            'timefinished' => array(
-                'type' => PARAM_INT,
+                'type' => state::class,
             ),
         );
     }
@@ -73,12 +70,12 @@ class tictactoe_game extends persistent {
      * @param state $state
      * @throws \coding_exception
      */
-    public function set_state($state) {
+    protected function set_state($state) {
         $this->raw_set('state', serialize(get_object_vars($state)));
     }
 
-    public function get_state() {
-        return new state(unserialize($this->raw_get('state')));
+    protected function get_state() {
+        return new state((object) unserialize($this->raw_get('state')));
     }
 
     /*

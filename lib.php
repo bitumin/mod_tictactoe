@@ -32,9 +32,9 @@
 defined('MOODLE_INTERNAL') || die();
 
 // Custom mod plugin constants
-define('TICTACTOE_LEVEL_NOVICE', 0);
+define('TICTACTOE_LEVEL_BLIND', 0);
 define('TICTACTOE_LEVEL_NOVICE', 1);
-define('TICTACTOE_LEVEL_NOVICE', 2);
+define('TICTACTOE_LEVEL_MASTER', 2);
 
 /* Moodle core API */
 
@@ -47,14 +47,13 @@ define('TICTACTOE_LEVEL_NOVICE', 2);
  * @return mixed true if the feature is supported, null if unknown
  */
 function tictactoe_supports($feature) {
-
     switch ($feature) {
         case FEATURE_MOD_INTRO:
             return true;
         case FEATURE_SHOW_DESCRIPTION:
             return true;
         case FEATURE_GRADE_HAS_GRADE:
-            return true;
+            return false;
         case FEATURE_BACKUP_MOODLE2:
             return true;
         default:
@@ -73,6 +72,8 @@ function tictactoe_supports($feature) {
  * @param stdClass $tictactoe Submitted data from the form in mod_form.php
  * @param mod_tictactoe_mod_form $mform The form instance itself (if needed)
  * @return int The id of the newly inserted tictactoe record
+ * @throws dml_exception
+ * @throws coding_exception
  */
 function tictactoe_add_instance(stdClass $tictactoe, mod_tictactoe_mod_form $mform = null) {
     global $DB;
@@ -98,6 +99,8 @@ function tictactoe_add_instance(stdClass $tictactoe, mod_tictactoe_mod_form $mfo
  * @param stdClass $tictactoe An object from the form in mod_form.php
  * @param mod_tictactoe_mod_form $mform The form instance itself (if needed)
  * @return boolean Success/Fail
+ * @throws dml_exception
+ * @throws coding_exception
  */
 function tictactoe_update_instance(stdClass $tictactoe, mod_tictactoe_mod_form $mform = null) {
     global $DB;
@@ -123,6 +126,7 @@ function tictactoe_update_instance(stdClass $tictactoe, mod_tictactoe_mod_form $
  *
  * @param int $courseid Course ID
  * @return bool
+ * @throws dml_exception
  */
 function tictactoe_refresh_events($courseid = 0) {
     global $DB;
@@ -137,10 +141,10 @@ function tictactoe_refresh_events($courseid = 0) {
         }
     }
 
-    foreach ($tictactoes as $tictactoe) {
+//    foreach ($tictactoes as $tictactoe) {
         // Create a function such as the one below to deal with updating calendar events.
         // tictactoe_update_events($tictactoe);
-    }
+//    }
 
     return true;
 }
@@ -154,6 +158,7 @@ function tictactoe_refresh_events($courseid = 0) {
  *
  * @param int $id Id of the module instance
  * @return boolean Success/Failure
+ * @throws dml_exception
  */
 function tictactoe_delete_instance($id) {
     global $DB;
@@ -289,15 +294,16 @@ function tictactoe_get_extra_capabilities() {
  * @param int $tictactoeid ID of an instance of this module
  * @param int $scaleid ID of the scale
  * @return bool true if the scale is used by the given tictactoe instance
+ * @throws dml_exception
  */
 function tictactoe_scale_used($tictactoeid, $scaleid) {
     global $DB;
 
-    if ($scaleid and $DB->record_exists('tictactoe', array('id' => $tictactoeid, 'grade' => -$scaleid))) {
+    if ($scaleid && $DB->record_exists('tictactoe', array('id' => $tictactoeid, 'grade' => -$scaleid))) {
         return true;
-    } else {
-        return false;
     }
+
+    return false;
 }
 
 /**
@@ -307,15 +313,16 @@ function tictactoe_scale_used($tictactoeid, $scaleid) {
  *
  * @param int $scaleid ID of the scale
  * @return boolean true if the scale is used by any tictactoe instance
+ * @throws dml_exception
  */
 function tictactoe_scale_used_anywhere($scaleid) {
     global $DB;
 
-    if ($scaleid and $DB->record_exists('tictactoe', array('grade' => -$scaleid))) {
+    if ($scaleid && $DB->record_exists('tictactoe', array('grade' => -$scaleid))) {
         return true;
-    } else {
-        return false;
     }
+
+    return false;
 }
 
 /**
@@ -326,6 +333,7 @@ function tictactoe_scale_used_anywhere($scaleid) {
  * @param stdClass $tictactoe instance object with extra cmidnumber and modname property
  * @param bool $reset reset grades in the gradebook
  * @return void
+ * @throws coding_exception
  */
 function tictactoe_grade_item_update(stdClass $tictactoe, $reset = false) {
     global $CFG;
@@ -377,7 +385,7 @@ function tictactoe_grade_item_delete($tictactoe) {
  * @param int $userid update grade of specific user only, 0 means all participants
  */
 function tictactoe_update_grades(stdClass $tictactoe, $userid = 0) {
-    global $CFG, $DB;
+    global $CFG;
     require_once($CFG->libdir . '/gradelib.php');
 
     // Populate array of grade objects indexed by userid.
@@ -437,6 +445,9 @@ function tictactoe_get_file_info($browser, $areas, $course, $cm, $context, $file
  * @param array $args extra arguments (itemid, path)
  * @param bool $forcedownload whether or not force download
  * @param array $options additional options affecting the file serving
+ * @throws coding_exception
+ * @throws moodle_exception
+ * @throws require_login_exception
  */
 function tictactoe_pluginfile($course, $cm, $context, $filearea, array $args, $forcedownload, array $options = array()) {
     global $DB, $CFG;

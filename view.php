@@ -79,7 +79,7 @@ $event->add_record_snapshot($PAGE->cm->modname, $tictactoe->to_record());
 $event->trigger();
 
 $PAGE->set_url('/mod/tictactoe/view.php', array('id' => $cm->id));
-$PAGE->set_title(format_string($tictactoe->name));
+$PAGE->set_title(format_string($tictactoe->get('name')));
 $PAGE->set_heading(format_string($course->fullname));
 
 /*
@@ -96,7 +96,7 @@ echo $OUTPUT->header();
 if (!empty($tictactoe->get('intro'))) {
     echo $OUTPUT->box(format_module_intro('tictactoe', $tictactoe, $cm->id), 'generalbox mod_introbox', 'tictactoeintro');
 }
-echo $OUTPUT->heading(format_string($tictactoe->name));
+echo $OUTPUT->heading(format_string($tictactoe->get('name')));
 
 /** @var mod_tictactoe\output\renderer $renderer */
 $renderer = $PAGE->get_renderer('mod_tictactoe');

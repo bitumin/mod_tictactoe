@@ -31,6 +31,7 @@ defined('MOODLE_INTERNAL') || die();
 class state {
     public $turn;
     public $aimovescount;
+    /** @var array $board */
     public $board;
     public $result;
 
@@ -107,5 +108,9 @@ class state {
         }
 
         return false;
+    }
+
+    public function to_object() {
+        return get_object_vars($this);
     }
 }
