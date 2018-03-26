@@ -30,17 +30,16 @@ defined('MOODLE_INTERNAL') || die();
  */
 class ai {
     private $level;
-    private $game;
+    private $state;
 
     /**
      * ai constructor.
      * @param string $level
-     * @param game $Game
-     * @param action $AIAction
+     * @param state $state
      */
-    public function __construct($level, $Game, $AIAction) {
+    public function __construct($level, $state) {
         $this->level = $level;
-        $this->game = new \stdClass();
+        $this->state = $state;
     }
 
     /**
@@ -48,8 +47,8 @@ class ai {
      * @return int|null
      */
     private function minimax_value($state) {
-        if ($state->is_terminal()) {
-            return game::score($state);
+        if ($state->has_finished()) {
+            return $this->get_finished_score($state);
         }
 
         $stateScore = null;
@@ -71,12 +70,12 @@ class ai {
         foreach ($availableNextStates as $nextState) {
             $nextScore = $this->minimax_value($nextState);
             if ($state->turn === 'X') {
-                // X wants to maximize --> update stateScore iff nextScore is larger
+                // X wants to maximize --> update stateScore if nextScore is larger
                 if ($nextScore > $stateScore) {
                     $stateScore = $nextScore;
                 }
             } else {
-                // O wants to minimize --> update stateScore iff nextScore is smaller
+                // O wants to minimize --> update stateScore if nextScore is smaller
                 if ($nextScore < $stateScore) {
                     $stateScore = $nextScore;
                 }
@@ -89,42 +88,41 @@ class ai {
     /**
      * Function: make the ai player take a blind move
      * that is: choose the cell to place its symbol randomly
-     * @return state
+     * @return action
      */
     private function take_a_blind_move() {
-        $available = $this->game->currentState->emptyCells();
+        $available = $this->state->get_empty_cells();
         $randomCell = $available[(int) floor(mt_rand() * count($available))];
-        $action = new action($randomCell);
 
-        return $action->apply_to($this->game->currentState);
+        return new action($randomCell);
     }
 
     /**
      * Make the ai player take a novice move,
      * that is: mix between choosing the optimal and suboptimal minimax decisions
      * @param string $turn the player to play, either X or O
-     * @return state
+     * @return action
      */
     private function take_a_novice_move($turn) {
-        $available = $this->game->currentState->emptyCells();
+        $available = $this->state->get_empty_cells();
 
         // Enumerate and calculate the score for each available actions to the ai player.
         /** @var action[] $availableActions */
         $availableActions = array_map(function ($pos) {
             $action = new action($pos); //create the action object
-            $nextState = $action->apply_to($this->game->currentState); // Get next state by applying the action.
-            $action->minimaxVal = $this->minimax_value($nextState); // Calculate and set the action's minimax value.
+            $nextState = $action->apply_to($this->state); // Get next state by applying the action.
+            $action->minimaxval = $this->minimax_value($nextState); // Calculate and set the action's minimax value.
 
             return $action;
         }, $available);
 
         // Sort the enumerated actions list by score.
         if ($turn === 'X') {
-            // X maximizes --> sort the actions in a descending manner to have the action with maximum minimax at first.
-            usort($availableActions, action::descending());
+            // X maximizes --> sort the actions in a descending manner to have the action with maximum minimax first.
+            usort($availableActions, self::descending());
         } else {
-            // O minimizes --> sort the actions in an ascending manner to have the action with minimum minimax at first.
-            usort($availableActions, action::ascending());
+            // O minimizes --> sort the actions in an ascending manner to have the action with minimum minimax first.
+            usort($availableActions, self::ascending());
         }
 
         // Take the optimal action 40% of the time, and take the 1st suboptimal action 60% of the time
@@ -141,66 +139,111 @@ class ai {
             }
         }
 
-        return $chosenAction->apply_to($this->game->currentState);
+        return $chosenAction;
     }
 
     /**
      * Make the ai player take a master move,
      * that is: choose the optimal minimax decision
      * @param string $turn the player to play, either X or O
-     * @return state
+     * @return action
      */
     private function take_a_master_move($turn) {
-        $available = $this->game->currentState->emptyCells();
+        $available = $this->state->get_empty_cells();
 
         // Enumerate and calculate the score for each avaialable actions to the ai player
         /** @var action[] $availableActions */
         $availableActions = array_map(function ($pos) {
             $action = new action($pos); //create the action object
-            $next = $action->apply_to($this->game->currentState); //get next state by applying the action
-            $action->minimaxVal = $this->minimax_value($next); //calculate and set the action's minmax value
+            $next = $action->apply_to($this->state); //get next state by applying the action
+            $action->minimaxval = $this->minimax_value($next); //calculate and set the action's minmax value
             return $action;
         }, $available);
 
         // Sort the enumerated actions list by score
         if ($turn === 'X') {
-            // X maximizes --> sort the actions in a descending manner to have the action with maximum minimax at first.
-            usort($availableActions, action::descending());
+            // X maximizes --> sort the actions in a descending manner to have the action with maximum minimax first.
+            usort($availableActions, self::descending());
         } else {
-            // O minimizes --> sort the actions in an ascending manner to have the action with minimum minimax at first.
-            usort($availableActions, action::ascending());
+            // O minimizes --> sort the actions in an ascending manner to have the action with minimum minimax first.
+            usort($availableActions, self::ascending());
         }
 
         // Take the first action as it's the optimal.
-        $chosenAction = $availableActions[0];
-
-        return $chosenAction->apply_to($this->game->currentState);
-    }
-
-    /**
-     * Specify the game the ai player will play
-     * @param game $_game the game the ai will play
-     */
-    public function plays($_game) {
-        $this->game = $_game;
+        return $availableActions[0];
     }
 
     /**
      * Notify the ai player that it's its turn
      * @param string $turn the player to play, either X or O
+     * @return action|false
      */
-    public function notify($turn) {
+    public function calculate_move($turn) {
         switch ($this->level) {
-            //invoke the desired behavior based on the level chosen
             case 'blind':
-                $this->take_a_blind_move();
-                break;
+                return $this->take_a_blind_move();
             case 'novice':
-                $this->take_a_novice_move($turn);
-                break;
+                return $this->take_a_novice_move($turn);
             case 'master':
-                $this->take_a_master_move($turn);
-                break;
+                return $this->take_a_master_move($turn);
         }
+
+        return false;
+    }
+
+    /**
+     * Calculates the score of the x player in a given terminal state
+     * @param state $state The state in which the score is calculated
+     * @return int the score calculated for the human player
+     */
+    private function get_finished_score($state) {
+        if ($state->result === 'X-won') {
+            // The x player won.
+            return 10 - $state->aimovescount;
+        }
+
+        if ($state->result === 'O-won') {
+            // The x player lost.
+            return -10 + $state->aimovescount;
+        }
+
+        // It's a draw.
+        return 0;
+    }
+
+    /**
+     * Defines a rule for sorting ai actions in ascending manner
+     * @return \Closure
+     */
+    public static function ascending() {
+        return function($firstAction, $secondAction) {
+            if ($firstAction->minimaxVal < $secondAction->minimaxVal) {
+                return -1; // Indicates that firstAction goes before secondAction.
+            }
+
+            if ($firstAction->minimaxVal > $secondAction->minimaxVal) {
+                return 1; // Indicates that secondAction goes before firstAction.
+            }
+
+            return 0; // Indicates a tie.
+        };
+    }
+
+    /**
+     * Defines a rule for sorting ai actions in descending manner
+     * @return \Closure
+     */
+    public static function descending() {
+        return function ($firstAction, $secondAction) {
+            if ($firstAction->minimaxVal > $secondAction->minimaxVal) {
+                return -1; // Indicates that firstAction goes before secondAction.
+            }
+
+            if ($firstAction->minimaxVal < $secondAction->minimaxVal) {
+                return 1; // Indicates that secondAction goes before firstAction.
+            }
+
+            return 0; // Indicates a tie.
+        };
     }
 }

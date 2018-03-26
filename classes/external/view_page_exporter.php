@@ -28,6 +28,8 @@ defined('MOODLE_INTERNAL') || die();
 
 use context_module;
 use core\external\exporter;
+use mod_tictactoe\persistent\tictactoe;
+use mod_tictactoe\persistent\tictactoe_game;
 use renderer_base;
 
 /**
@@ -39,7 +41,9 @@ use renderer_base;
 class view_page_exporter extends exporter {
     protected static function define_related() {
         return array(
-            'context' => 'context'
+            'context' => 'context',
+            'tictactoe' => 'tictactoe',
+            'tictactoegame' => 'tictactoegame',
         );
     }
 
@@ -48,8 +52,8 @@ class view_page_exporter extends exporter {
             'contextid' => array(
                 'type' => PARAM_INT,
             ),
-            'level' => array(
-                'type' => PARAM_TEXT,
+            'gameid' => array(
+                'type' => PARAM_INT,
             ),
         );
     }
@@ -57,11 +61,14 @@ class view_page_exporter extends exporter {
     protected function get_other_values(renderer_base $output) {
         /** @var context_module $context */
         $context = $this->related['context'];
+        /** @var tictactoe $tictactoe */
+        $tictactoe = $this->related['tictactoe'];
+        /** @var tictactoe_game $tictactoegame */
+        $tictactoegame = $this->related['tictactoegame'];
 
         $values = array();
         $values['contextid'] = $context->id;
-        // Get this from the instance setting!
-        $values['level'] = 'blind'; // novice, master
+        $values['gameid'] = $tictactoegame->get('id');
 
         return $values;
     }

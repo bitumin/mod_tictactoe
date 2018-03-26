@@ -31,10 +31,10 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-/**
- * Example constant, you probably want to remove this :-)
- */
-define('TICTACTOE_ULTIMATE_ANSWER', 42);
+// Custom mod plugin constants
+define('TICTACTOE_LEVEL_NOVICE', 0);
+define('TICTACTOE_LEVEL_NOVICE', 1);
+define('TICTACTOE_LEVEL_NOVICE', 2);
 
 /* Moodle core API */
 

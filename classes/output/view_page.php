@@ -32,6 +32,8 @@ require_once(__DIR__ . '/../../locallib.php');
 
 use context;
 use mod_tictactoe\external\view_page_exporter;
+use mod_tictactoe\persistent\tictactoe;
+use mod_tictactoe\persistent\tictactoe_game;
 use renderable;
 use stdClass;
 use templatable;
@@ -45,14 +47,20 @@ use renderer_base;
  */
 class view_page implements renderable, templatable {
     private $context;
+    private $tictactoe;
+    private $tictactoegame;
 
     /**
      * gallery_assignment_page constructor.
      *
      * @param context $context
+     * @param tictactoe $tictactoe
+     * @param tictactoe_game $tictactoegame
      */
-    public function __construct($context) {
+    public function __construct($context, $tictactoe, $tictactoegame) {
         $this->context = $context;
+        $this->tictactoe = $tictactoe;
+        $this->tictactoegame = $tictactoegame;
     }
 
     /**
@@ -65,6 +73,8 @@ class view_page implements renderable, templatable {
     public function export_for_template(renderer_base $output) {
         $exporter = new view_page_exporter(null, [
             'context' => $this->context,
+            'tictactoe' => $this->tictactoe,
+            'tictactoegame' => $this->tictactoegame,
         ]);
 
         return $exporter->export($output);

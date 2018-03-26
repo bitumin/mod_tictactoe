@@ -29,79 +29,34 @@ defined('MOODLE_INTERNAL') || die();
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class action {
-    public $movePosition;
-    public $minimaxVal = 0;
+    public $moveposition;
+    public $minimaxval = 0;
 
     /**
      * AIAction constructor.
      * @param $pos
      */
     public function __construct($pos) {
-        $this->movePosition = $pos;
+        $this->moveposition = $pos;
     }
 
     /**
      * @param state $state
-     * @return state
+     * @return state|false
      */
     public function apply_to($state) {
         $next = new state($state);
 
-        // Put the letter on the board.
-        $next->board[$this->movePosition] = $state->turn;
-
-        if ($state->turn === 'O') {
-            $next->oMovesCount++;
+        $available = $next->get_empty_cells();
+        if (!in_array($this->moveposition, $available, true)) {
+            return false;
         }
+
+        // Put the move on the board.
+        $next->board[$this->moveposition] = $state->turn;
 
         $next->advance_turn();
 
         return $next;
-    }
-
-    /**
-     * Defines a rule for sorting AIActions in ascending manner
-     * @return \Closure
-     */
-    public static function ascending() {
-        /**
-         * @param $firstAction [AIAction] : the first action in a pairwise sort
-         * @param $secondAction [AIAction]: the second action in a pairwise sort
-         * @return int {Number} -1, 1, or 0
-         */
-        return function($firstAction, $secondAction) {
-            if ($firstAction->minimaxVal < $secondAction->minimaxVal) {
-                return -1; // Indicates that firstAction goes before secondAction.
-            }
-
-            if ($firstAction->minimaxVal > $secondAction->minimaxVal) {
-                return 1; // Indicates that secondAction goes before firstAction.
-            }
-
-            return 0; // Indicates a tie.
-        };
-    }
-
-    /**
-     * Defines a rule for sorting AIActions in descending manner
-     * @return \Closure
-     */
-    public static function descending() {
-        /**
-         * @param $firstAction [AIAction] : the first action in a pairwise sort
-         * @param $secondAction [AIAction]: the second action in a pairwise sort
-         * @return int {Number} -1, 1, or 0
-         */
-        return function ($firstAction, $secondAction) {
-            if ($firstAction->minimaxVal > $secondAction->minimaxVal) {
-                return -1; // Indicates that firstAction goes before secondAction.
-            }
-
-            if ($firstAction->minimaxVal < $secondAction->minimaxVal) {
-                return 1; // Indicates that secondAction goes before firstAction.
-            }
-
-            return 0; // Indicates a tie.
-        };
     }
 }

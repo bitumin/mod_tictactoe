@@ -34,7 +34,7 @@ use external_function_parameters;
 use external_single_structure;
 use external_value;
 use invalid_parameter_exception;
-use mod_tictactoe\external\submit_player_move_exporter;
+use mod_tictactoe\external\game_state_exporter;
 use mod_tictactoe\persistent\tictactoe_game;
 use moodle_exception;
 use restricted_context_exception;
@@ -84,7 +84,7 @@ class external extends core_external_api {
         if ($gameid < 1) {
             throw new invalid_parameter_exception('Unexpected tictactoe game id value: ' . $gameid);
         }
-        if ($playermove < 0) {
+        if ($playermove < 0 || $playermove > 8) {
             throw new invalid_parameter_exception('Unexpected player move index value: ' . $playermove);
         }
 
@@ -104,12 +104,12 @@ class external extends core_external_api {
         }
 
         // Submit move and return new tictactoe game state.
-        $newstate = $tictactoegame->process_player_move($playermove);
+        list($aiaction, $newstate) = api::process_player_move($tictactoegame, $playermove);
 
         /** @var core_renderer $output */
         $output = $PAGE->get_renderer('core');
-        /** @var submit_player_move_exporter $exporter */
-        $exporter = new submit_player_move_exporter(null, ['context' => $context, 'state' => $newstate]);
+        /** @var game_state_exporter $exporter */
+        $exporter = new game_state_exporter($newstate, ['context' => $context, 'aiaction' => $aiaction]);
 
         return $exporter->export($output);
     }
@@ -118,6 +118,6 @@ class external extends core_external_api {
      * @return external_single_structure
      */
     public static function submit_player_move_returns() {
-        return submit_player_move_exporter::get_read_structure();
+        return game_state_exporter::get_read_structure();
     }
 }

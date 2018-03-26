@@ -23,7 +23,7 @@
  */
 
 /*
- * Little but necessary explanation concerning Moodle views:
+ * Little explanation concerning Moodle views:
  *
  * view.php is the entry point for out activity instance view.
  *
@@ -41,22 +41,29 @@
  * our renderer and rendering methods will just take care of the "page-specific" main content.
  */
 
-require_once(dirname(dirname(__DIR__)) . '/config.php');
+require_once(__DIR__ . '/../../config.php');
 require_once(__DIR__ . '/lib.php');
 
-$id = optional_param('id', 0, PARAM_INT); // Course_module ID.
-$t = optional_param('n', 0, PARAM_INT); // Tictactoe instance ID.
+$cmid = optional_param('id', 0, PARAM_INT); // Course_module ID.
+$tictactoeid = optional_param('t', 0, PARAM_INT); // Tictactoe instance ID.
+$gameid = optional_param('g', 0, PARAM_INT); // Tictactoe game ID.
 
-if ($id) {
-    $cm = get_coursemodule_from_id('tictactoe', $id, 0, false, MUST_EXIST);
-    $course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
-    $tictactoe = $DB->get_record('tictactoe', array('id' => $cm->instance), '*', MUST_EXIST);
-} else if ($t) {
-    $tictactoe = $DB->get_record('tictactoe', array('id' => $t), '*', MUST_EXIST);
-    $course = $DB->get_record('course', array('id' => $tictactoe->course), '*', MUST_EXIST);
-    $cm = get_coursemodule_from_instance('tictactoe', $tictactoe->id, $course->id, false, MUST_EXIST);
+if ($gameid) {
+    $tictactoegame = new \mod_tictactoe\persistent\tictactoe_game($gameid);
+    $tictactoe = $tictactoegame->get_tictactoe();
+    $cm = $tictactoe->get_cm();
+    $course = $tictactoe->get_course_record();
+} else if ($tictactoeid) {
+    $tictactoe = new \mod_tictactoe\persistent\tictactoe($tictactoeid);
+    $cm = $tictactoe->get_cm();
+    $course = $tictactoe->get_course_record();
+    $tictactoegame = \mod_tictactoe\api::get_tictactoe_game($tictactoe);
+} else if ($cmid) {
+    list($course, $cm) = get_course_and_cm_from_cmid($cmid);
+    $tictactoe = new \mod_tictactoe\persistent\tictactoe($cm->instance);
+    $tictactoegame = \mod_tictactoe\api::get_tictactoe_game($tictactoe);
 } else {
-    print_error('You must specify a course_module ID or an instance ID');
+    print_error('missingparameter');
 }
 
 require_login($course, true, $cm);
@@ -68,7 +75,7 @@ $event = \mod_tictactoe\event\course_module_viewed::create(array(
     'context' => $PAGE->context,
 ));
 $event->add_record_snapshot('course', $PAGE->course);
-$event->add_record_snapshot($PAGE->cm->modname, $tictactoe);
+$event->add_record_snapshot($PAGE->cm->modname, $tictactoe->to_record());
 $event->trigger();
 
 $PAGE->set_url('/mod/tictactoe/view.php', array('id' => $cm->id));
@@ -86,15 +93,16 @@ $PAGE->set_heading(format_string($course->fullname));
 // Output starts here.
 echo $OUTPUT->header();
 
-if (!empty($tictactoe->intro)) {
+if (!empty($tictactoe->get('intro'))) {
     echo $OUTPUT->box(format_module_intro('tictactoe', $tictactoe, $cm->id), 'generalbox mod_introbox', 'tictactoeintro');
 }
 echo $OUTPUT->heading(format_string($tictactoe->name));
 
 /** @var mod_tictactoe\output\renderer $renderer */
 $renderer = $PAGE->get_renderer('mod_tictactoe');
-$page = new \mod_tictactoe\output\view_page($context); // The page object takes care of fetching the data for the view.
-echo $renderer->render_view_page($page); // The renderer and its methods takes care of passing the page data to our template.
+// The page object takes care of fetching the data for the view.
+$page = new \mod_tictactoe\output\view_page($context, $tictactoe, $tictactoegame);
+echo $renderer->render_view_page($page); // The renderer and its methods takes care of passing the page data to a template.
 
 // Ideally, the template takes care of all the front-end logic (libraries, strings, styling and so on...).
 // If possible, it's better to avoid handling any front-end operations from this file.

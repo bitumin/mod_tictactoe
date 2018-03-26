@@ -1,74 +1,78 @@
 /**
- * Front-end game state control.
  * @module mod_tictactoe/control
  */
 define([
     'jquery',
-    'mod_tictactoe/ui'
-], function ($, ui) {
+    'core/ajax',
+    'core/notification',
+    'mod_tictactoe/ui',
+    'mod_tictactoe/game'
+], function ($, ajax, notification, ui, game) {
     return {
         init: function () {
-            var tictactoe = {};
-
-            // Human starts.
-            tictactoe.status = 'running';
-            tictactoe.turn = 'X';
+            // Human starts
             ui.switchViewTo("human");
 
-            /*
-             * Click on cell triggers AI's behavior.
-             * If an empty cell is clicked when the game is running and its the human player's turn
-             * get the indices of the clicked cell and push it to plugin back end to handle the state update.
-             */
+            // Click on the game cells triggers the communication with the back-end.
             $(".cell").each(function () {
                 var $cell = $(this);
                 $cell.click(function () {
-                    if (tictactoe.status !== "running" || tictactoe.turn !== 'X' || $cell.hasClass('occupied')) {
+                    if (game.status !== "running" || game.turn !== 'X' || $cell.hasClass('occupied')) {
                         return;
                     }
 
-                    // Notify AI's turn.
-                    tictactoe.turn = 'O';
+                    // Human has clicked a cell, now it's the AI's turn.
+                    game.turn = 'O';
                     ui.switchViewTo("ai");
 
-                    // Fetch human action (selected cell).
+                    // Get clicked cell index and display human action..
                     var indx = parseInt($cell.data("indx"));
-
-                    // Display human action.
                     ui.insertAt(indx, 'X');
 
-                    // Request for the AI's next move.
-                    var _state = {};
-                    _state.validMove = true;
-                    _state.isTerminal = false;
-                    _state.movePosition = 1;
+                    // Send the human move to the back-end and wait for the response with the AI's next move.
+                    ajax.call([{
+                        methodname: 'mod_gallery_update_gallery_header',
+                        args: {
+                            tictactoe: {
+                                gameid: game.id,
+                                playermove: indx
+                            }
+                        },
+                        fail: notification.exception
+                    }])[0].done(function(response) {
+                        // Response example:
+                        var _state = {};
+                        _state.validMove = true;
+                        _state.isTerminal = false;
+                        _state.movePosition = 1;
 
-                    if (!_state.validMove) {
-                        // Undo last human move and notify invalid move.
-                        tictactoe.turn = "X";
-                        ui.switchViewTo("try-again");
-                        return;
-                    }
-
-                    if (_state.isTerminal) {
-                        // The game just finished, set game status to finished and notify result.
-                        tictactoe.status = "ended";
-                        if (_state.result === "X-won") { // Human won.
-                            ui.switchViewTo("won");
-                        } else if (_state.result === "O-won") { // Human lost.
-                            ui.switchViewTo("lost");
-                        } else if (_state.result === "draw") { // It's a draw.
-                            ui.switchViewTo("draw");
-                        } else {
-                            // Some sort of back end error happened. Notify?
+                        if (!_state.validMove) {
+                            // Undo last human move and notify invalid move.
+                            game.turn = "X";
+                            ui.switchViewTo("try-again");
+                            return;
                         }
-                        return;
-                    }
 
-                    // The game is still running: display AI's action and notify human's turn.
-                    ui.insertAt(_state.movePosition, 'O'); // Show AI move in board.
-                    tictactoe.turn = "X";
-                    ui.switchViewTo("human");
+                        if (_state.isTerminal) {
+                            // The game just finished, set game status to finished and notify result.
+                            game.status = "ended";
+                            if (_state.result === "X-won") { // Human won.
+                                ui.switchViewTo("won");
+                            } else if (_state.result === "O-won") { // Human lost.
+                                ui.switchViewTo("lost");
+                            } else if (_state.result === "draw") { // It's a draw.
+                                ui.switchViewTo("draw");
+                            } else {
+                                // Some sort of back end error happened. Notify?
+                            }
+                            return;
+                        }
+
+                        // The game is still running: display AI's action and notify human's turn.
+                        ui.insertAt(_state.movePosition, 'O'); // Show AI move in board.
+                        game.turn = "X";
+                        ui.switchViewTo("human");
+                    });
                 });
             });
         }

@@ -53,7 +53,8 @@ function xmldb_tictactoe_upgrade($oldversion) {
         $table->add_field('name', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null, 'course');
         $table->add_field('intro', XMLDB_TYPE_TEXT, 'medium', null, null, null, null, 'name');
         $table->add_field('introformat', XMLDB_TYPE_INTEGER, '4', null, XMLDB_NOTNULL, null, '0', 'intro');
-        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'introformat');
+        $table->add_field('level', XMLDB_TYPE_INTEGER, '4', null, XMLDB_NOTNULL, null, '0', 'introformat');
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'level');
         $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'timecreated');
 
         $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
@@ -73,10 +74,9 @@ function xmldb_tictactoe_upgrade($oldversion) {
         $table->add_field('tictactoeid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null, 'id');
         $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null, 'tictactoeid');
         $table->add_field('state', XMLDB_TYPE_TEXT, null, null, null, null, null, 'userid');
-        $table->add_field('result', XMLDB_TYPE_CHAR, '50', null, null, null, null, 'state');
+        $table->add_field('level', XMLDB_TYPE_INTEGER, '4', null, XMLDB_NOTNULL, null, '0', 'introformat');
         $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null, 'result');
         $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null, 'timecreated');
-        $table->add_field('timefinished', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'timemodified');
 
         $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
         $table->add_key('tictactoeid', XMLDB_KEY_FOREIGN, array('tictactoeid'), 'tictactoe', array('id'));

@@ -1,15 +1,12 @@
 /**
- * @module mod_tictactoe/ai
+ * @module mod_tictactoe/ui
  */
 define([
     'jquery'
 ], function ($) {
-    /*
-     * ui object encloses all UI related methods and attributes
-     */
     var ui = {};
 
-    // holds the current visible view
+    // current visible view
     ui.currentView = '';
 
     /**

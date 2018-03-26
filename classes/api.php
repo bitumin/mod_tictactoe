@@ -16,6 +16,12 @@
 
 namespace mod_tictactoe;
 
+use mod_tictactoe\game\action;
+use mod_tictactoe\game\ai;
+use mod_tictactoe\game\state;
+use mod_tictactoe\persistent\tictactoe;
+use mod_tictactoe\persistent\tictactoe_game;
+
 defined('MOODLE_INTERNAL') || die();
 
 require_once(__DIR__ . '/../locallib.php');
@@ -24,7 +30,53 @@ require_once(__DIR__ . '/../locallib.php');
  * Class mod_tictactoe_api
  */
 class api {
-    public static function start_tictactoe_game() {
+    /**
+     * @param tictactoe $tictactoe
+     * @return tictactoe_game|false
+     * @throws \coding_exception
+     * @throws \core\invalid_persistent_exception
+     */
+    public static function get_tictactoe_game($tictactoe) {
+        global $USER;
 
+        if ($tictactoegame = $tictactoe->get_game_by_userid($USER->id)) {
+            return $tictactoegame;
+        }
+
+        // If no game has been created for this user yet, create a new one.
+        $tictactoegame = new tictactoe_game(0, (object) [
+            'tictactoeid' => $tictactoe->get('id'),
+            'userid' => $USER->id,
+            'state' => new state()
+        ]);
+        $tictactoegame->create();
+
+        return $tictactoegame;
+    }
+
+    /**
+     * @param tictactoe_game $tictactoegame
+     * @param int $playermove
+     * @return array
+     * @throws \coding_exception
+     */
+    public static function process_player_move($tictactoegame, $playermove) {
+        $previousstate = $tictactoegame->get('state');
+        $playeraction = new action($playermove);
+
+        if (!$afterplayeractionstate = $playeraction->apply_to($previousstate)) {
+            return [false, false];
+        }
+
+        $ai = new ai($tictactoegame->get('level'), $afterplayeractionstate);
+        if (!$aiaction = $ai->calculate_move($afterplayeractionstate->turn)) {
+            return [false, false];
+        }
+
+        if (!$newstate = $aiaction->apply_to($afterplayeractionstate)) {
+            return [false, false];
+        }
+
+        return [$aiaction, $newstate];
     }
 }

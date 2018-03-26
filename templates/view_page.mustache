@@ -21,9 +21,9 @@
 
     * Context:
     contextid
-    level
+    gameid
 }}
-<div data-region="view-page" data-contextid="{{contextid}}" data-level="{{level}}">
+<div data-region="view-page" data-contextid="{{contextid}}" data-gameid="{{gameid}}">
     <div class='main-container'>
         <div class='board'>
             <div class='cell' data-indx="0"></div>
@@ -47,6 +47,6 @@
 </div>
 {{#js}}
     require(['mod_tictactoe/control'], function(control) {
-        control.init("{{level}}");
+        control.init();
     });
 {{/js}}

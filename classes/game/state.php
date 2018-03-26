@@ -29,30 +29,36 @@ defined('MOODLE_INTERNAL') || die();
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class state {
-    public $turn = '';
-    public $oMovesCount = 0;
-    public $result = 'still running';
-    public $board = [];
+    public $turn;
+    public $aimovescount;
+    public $board;
+    public $result;
 
     /**
      * State constructor.
-     * @param state|null $old
+     * @param state|null $oldstate
      */
-    public function __construct($old = null) {
-        if ($old !== null) {
-            // If the state is constructed using a copy of another state.
-            $len = count($old->board);
-            for ($itr = 0; $itr < $len; $itr++) {
-                $this->board[$itr] = $old->board[$itr];
-            }
-            $this->oMovesCount = $old->oMovesCount;
-            $this->result = $old->result;
-            $this->turn = $old->turn;
+    public function __construct($oldstate = null) {
+        if ($oldstate === null) {
+            $this->turn = 'X'; // X = human, O = ai
+            $this->aimovescount = 0;
+            $this->board = ['E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E'];
+            $this->result = null;
+        } else {
+            $this->board = $oldstate->board;
+            $this->aimovescount = $oldstate->aimovescount;
+            $this->result = $oldstate->result;
+            $this->turn = $oldstate->turn;
         }
     }
 
     public function advance_turn() {
-        $this->turn = $this->turn === 'X' ? 'O' : 'X';
+        if ($this->turn === 'X') {
+            $this->turn = 'O';
+        } else {
+            ++$this->aimovescount;
+            $this->turn = 'X';
+        }
     }
 
     public function get_empty_cells() {
@@ -66,7 +72,7 @@ class state {
         return $indxs;
     }
 
-    public function is_terminal() {
+    public function has_finished() {
         $B = $this->board;
 
         // Check rows.

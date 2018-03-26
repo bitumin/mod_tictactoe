@@ -51,7 +51,7 @@ class tictactoe extends persistent {
     protected static function define_properties() {
         /*
          * Do not declare id, timecreated or timemodified fields.
-         * This fields are automatically handle by Moodle.
+         * Those fields are automatically handled by Moodle.
          */
         return array(
             'course' => array(
@@ -148,5 +148,14 @@ class tictactoe extends persistent {
         }
 
         return context_module::instance($cm->id);
+    }
+
+    /**
+     * @param int $userid
+     * @return persistent|false
+     * @throws \coding_exception
+     */
+    public function get_game_by_userid($userid) {
+        return tictactoe_game::get_record(['tictactoeid' => $this->get('id'), 'userid' => $userid]);
     }
 }

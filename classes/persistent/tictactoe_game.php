@@ -31,6 +31,7 @@ require_once(__DIR__ . '/../../locallib.php');
 use core\persistent;
 use core_user;
 use lang_string;
+use mod_tictactoe\game\state;
 use stdClass;
 
 /**
@@ -58,13 +59,26 @@ class tictactoe_game extends persistent {
             'state' => array(
                 'type' => PARAM_TEXT,
             ),
-            'result' => array(
-                'type' => PARAM_TEXT,
-            ),
             'timefinished' => array(
                 'type' => PARAM_INT,
             ),
         );
+    }
+
+    /*
+     * Custom setters and getters
+     */
+
+    /**
+     * @param state $state
+     * @throws \coding_exception
+     */
+    public function set_state($state) {
+        $this->raw_set('state', serialize(get_object_vars($state)));
+    }
+
+    public function get_state() {
+        return new state(unserialize($this->raw_get('state')));
     }
 
     /*
@@ -118,15 +132,5 @@ class tictactoe_game extends persistent {
      */
     public function get_player() {
         return core_user::get_user($this->get('userid'));
-    }
-
-    /*
-     * Business related logic
-     */
-
-    /**
-     * @param int $playermove
-     */
-    public function process_player_move($playermove) {
     }
 }
